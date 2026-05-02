@@ -71,6 +71,66 @@
       }
     ]
   },
+  "config": {
+    "files": [
+      {
+        "path": "./jobs/init/schema.tql",
+        "content": "define\n    index sub attribute, value long;\n    traceId sub attribute, value string;\n    logName sub attribute, value string;\n\n    eventName sub attribute, value string;\n\n    event sub entity,\n        owns eventName,\n        plays trace:item,\n        plays follows:input,\n        plays follows:output;\n\n    log sub entity,\n        owns logName,\n        plays trace:owner,\n        plays follows:owner;\n\n    trace sub relation,\n        owns traceId,\n        owns index,\n        relates owner,\n        relates item;\n\n    follows sub relation,\n        relates owner,\n        relates input,\n        relates output;\n"
+      },
+      {
+        "path": "./jobs/init/init.tql",
+        "content": "database create ${TYPEDB_DB}\ntransaction ${TYPEDB_DB} schema write\nsource ./jobs/init/schema.tql\ncommit\n"
+      }
+    ]
+  },
+  "setup": {
+    "steps": {
+      "init-schema": {
+        "description": "Create the configured TypeDB database and load the default schema through the TypeDB console.",
+        "depend_on": [
+          "typedb"
+        ],
+        "execservice": "@java",
+        "commandline": {
+          "win32": "-cp \"${SERVICE_BIN_PATH}/console/lib/*\" com.vaticle.typedb.console.TypeDBConsole --server ${TYPEDB_HOST}:${SERVICE_PORT} --script=\"${SERVICE_ROOT}\\jobs\\init\\init.tql\"",
+          "linux": "-cp \"${SERVICE_BIN_PATH}/console/lib/*\" com.vaticle.typedb.console.TypeDBConsole --server ${TYPEDB_HOST}:${SERVICE_PORT} --script=\"${SERVICE_ROOT}/jobs/init/init.tql\"",
+          "darwin": "-cp \"${SERVICE_BIN_PATH}/console/lib/*\" com.vaticle.typedb.console.TypeDBConsole --server ${TYPEDB_HOST}:${SERVICE_PORT} --script=\"${SERVICE_ROOT}/jobs/init/init.tql\""
+        },
+        "timeoutSeconds": 120,
+        "rerun": "manual"
+      },
+      "install-sample-python-deps": {
+        "description": "Install the sample data loader Python dependencies into the packaged job folder.",
+        "depend_on": [
+          "@python"
+        ],
+        "execservice": "@python",
+        "commandline": {
+          "win32": "-m pip install --target \"${SERVICE_ARTIFACT_ROOT}\\jobs\\sample\\__packages__\" -r \"${SERVICE_ARTIFACT_ROOT}\\jobs\\sample\\requirements.txt\"",
+          "linux": "-m pip install --target \"${SERVICE_ARTIFACT_ROOT}/jobs/sample/__packages__\" -r \"${SERVICE_ARTIFACT_ROOT}/jobs/sample/requirements.txt\"",
+          "darwin": "-m pip install --target \"${SERVICE_ARTIFACT_ROOT}/jobs/sample/__packages__\" -r \"${SERVICE_ARTIFACT_ROOT}/jobs/sample/requirements.txt\""
+        },
+        "timeoutSeconds": 300,
+        "rerun": "manual"
+      },
+      "load-sample": {
+        "description": "Load the packaged TypeDB sample logs after schema initialization.",
+        "depend_on": [
+          "typedb",
+          "typedb:init-schema",
+          "typedb:install-sample-python-deps"
+        ],
+        "execservice": "@python",
+        "commandline": {
+          "win32": "\"${SERVICE_ARTIFACT_ROOT}\\jobs\\sample\\basic_upload.py\" --port ${TYPEDB_PORT} --db ${TYPEDB_DB} --host ${TYPEDB_HOST}",
+          "linux": "\"${SERVICE_ARTIFACT_ROOT}/jobs/sample/basic_upload.py\" --port ${TYPEDB_PORT} --db ${TYPEDB_DB} --host ${TYPEDB_HOST}",
+          "darwin": "\"${SERVICE_ARTIFACT_ROOT}/jobs/sample/basic_upload.py\" --port ${TYPEDB_PORT} --db ${TYPEDB_DB} --host ${TYPEDB_HOST}"
+        },
+        "timeoutSeconds": 300,
+        "rerun": "manual"
+      }
+    }
+  },
   "healthcheck": {
     "type": "tcp",
     "address": "${TYPEDB_HOST}:${SERVICE_PORT}",

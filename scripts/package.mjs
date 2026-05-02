@@ -82,6 +82,7 @@ export async function packageTypeDb(platform = targetPlatform) {
   await rm(outputRoot, { recursive: true, force: true });
   await mkdir(packageRoot, { recursive: true });
   await cp(typedbRoot, path.join(packageRoot, "typedb"), { recursive: true });
+  await cp(path.join(repoRoot, "jobs"), path.join(packageRoot, "jobs"), { recursive: true });
   await writeFile(
     path.join(packageRoot, "SERVICE-LASSO-PACKAGE.json"),
     `${JSON.stringify(
@@ -92,6 +93,7 @@ export async function packageTypeDb(platform = targetPlatform) {
         arch: "x64",
         packagedBy: "service-lasso/lasso-typedb",
         runtimeProvider: "@java",
+        oneShotJobs: ["init-schema", "install-sample-python-deps", "load-sample"],
         excludes: ["server/data/** runtime database state", "server/logs/** runtime logs"],
       },
       null,
