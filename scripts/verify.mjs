@@ -88,7 +88,7 @@ async function waitForTcp(port, timeoutMs = 60000) {
 
 async function extractArtifact(artifact, platform, destination) {
   await rm(destination, { recursive: true, force: true });
-  await readdir(path.dirname(destination)).catch(async () => {});
+  await mkdir(destination, { recursive: true });
   if (platform === "win32") {
     run("powershell", [
       "-NoLogo",
