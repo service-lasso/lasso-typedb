@@ -179,6 +179,8 @@ for (const platform of platforms) {
   assert(existsSync(path.join(vendorRoot, "server", "conf", "config.yml")), `Missing TypeDB config for ${platform}.`);
   const dataFiles = await walkFiles(path.join(vendorRoot, "server", "data")).catch(() => []);
   assert(dataFiles.length === 0, `Packaged ${platform} vendor input must not include runtime database state.`);
+  const logFiles = await walkFiles(path.join(vendorRoot, "server", "logs")).catch(() => []);
+  assert(logFiles.length === 0, `Packaged ${platform} vendor input must not include runtime logs.`);
   for (const file of await walkFiles(vendorRoot)) {
     const info = await stat(file);
     assert(info.size <= maxSingleFileBytes, `File exceeds ${maxSingleFileBytes} byte limit: ${file}`);
