@@ -2,7 +2,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createServer, connect } from "node:net";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -111,6 +111,9 @@ async function smokeCurrentPlatform(artifact) {
 
   const typedbRoot = path.join(extractRoot, "typedb");
   assert(existsSync(path.join(typedbRoot, "server", "conf", "config.yml")), "Extracted artifact missing TypeDB config.");
+  assert(existsSync(path.join(extractRoot, "jobs", "init", "init.tql.template")), "Extracted artifact missing init job template.");
+  assert(existsSync(path.join(extractRoot, "jobs", "sample", "basic_upload.py")), "Extracted artifact missing sample loader.");
+  assert(existsSync(path.join(extractRoot, "jobs", "sample", "requirements.txt")), "Extracted artifact missing sample requirements.");
   const dataRoot = path.join(tempRoot, "data");
   await mkdir(dataRoot, { recursive: true });
   const port = await getFreePort();
@@ -146,6 +149,48 @@ async function smokeCurrentPlatform(artifact) {
 
   try {
     await waitForTcp(port);
+    const jobRoot = path.join(tempRoot, "jobs", "init");
+    await mkdir(jobRoot, { recursive: true });
+    await writeFile(path.join(jobRoot, "schema.tql"), await readFile(path.join(repoRoot, "jobs", "init", "schema.tql"), "utf8"), "utf8");
+    await writeFile(
+      path.join(jobRoot, "init.tql"),
+      [
+        "database create service_lasso_smoke",
+        "transaction service_lasso_smoke schema write",
+        "source ./jobs/init/schema.tql",
+        "commit",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    const consoleClasspath = path.join(typedbRoot, "console", "lib", "*");
+    run(
+      "java",
+      [
+        "-cp",
+        consoleClasspath,
+        "com.vaticle.typedb.console.TypeDBConsole",
+        "--server",
+        `127.0.0.1:${port}`,
+        "--script",
+        path.join(jobRoot, "init.tql"),
+      ],
+      { cwd: tempRoot },
+    );
+    const databases = run(
+      "java",
+      [
+        "-cp",
+        consoleClasspath,
+        "com.vaticle.typedb.console.TypeDBConsole",
+        "--server",
+        `127.0.0.1:${port}`,
+        "--command",
+        "database list",
+      ],
+      { cwd: tempRoot },
+    );
+    assert(databases.includes("service_lasso_smoke"), "TypeDB init smoke did not create the expected database.");
   } finally {
     child.kill();
     await new Promise((resolve) => child.once("close", resolve));
@@ -168,6 +213,32 @@ assert(manifest.healthcheck?.address === "${TYPEDB_HOST}:${SERVICE_PORT}", "TCP 
 assert(manifest.depend_on?.includes("@java"), "Missing @java dependency.");
 for (const globalName of ["TYPEDB_HOST", "TYPEDB_PORT", "TYPEDB_DB", "TYPEDB_URL", "TYPEDB_DATA_PATH"]) {
   assert(manifest.globalenv?.[globalName], `Missing globalenv output: ${globalName}`);
+}
+assert(manifest.config?.files?.some((file) => file.path === "./jobs/init/init.tql"), "Missing generated init.tql config file.");
+assert(manifest.config?.files?.some((file) => file.path === "./jobs/init/schema.tql"), "Missing generated schema.tql config file.");
+assert(manifest.setup?.steps?.["init-schema"]?.execservice === "@java", "init-schema setup must run through @java.");
+assert(manifest.setup?.steps?.["init-schema"]?.depend_on?.includes("typedb"), "init-schema setup must depend on typedb.");
+assert(manifest.setup?.steps?.["init-schema"]?.rerun === "manual", "init-schema setup must be manual.");
+assert(
+  manifest.setup?.steps?.["init-schema"]?.commandline?.win32?.includes("com.vaticle.typedb.console.TypeDBConsole"),
+  "init-schema setup must use the TypeDB console.",
+);
+assert(
+  manifest.setup?.steps?.["install-sample-python-deps"]?.execservice === "@python",
+  "install-sample-python-deps setup must run through @python.",
+);
+assert(manifest.setup?.steps?.["load-sample"]?.execservice === "@python", "load-sample setup must run through @python.");
+for (const dependency of ["typedb", "typedb:init-schema", "typedb:install-sample-python-deps"]) {
+  assert(manifest.setup?.steps?.["load-sample"]?.depend_on?.includes(dependency), `load-sample missing dependency: ${dependency}`);
+}
+for (const jobPath of [
+  path.join(repoRoot, "jobs", "init", "init.tql.template"),
+  path.join(repoRoot, "jobs", "init", "schema.tql"),
+  path.join(repoRoot, "jobs", "sample", "basic_upload.py"),
+  path.join(repoRoot, "jobs", "sample", "basic_logs.py"),
+  path.join(repoRoot, "jobs", "sample", "requirements.txt"),
+]) {
+  assert(existsSync(jobPath), `Missing packaged job asset: ${jobPath}`);
 }
 
 for (const platform of platforms) {
