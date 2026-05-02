@@ -1,0 +1,16 @@
+13:09:12.234 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- TypeDB Server is now running and will keep this process alive.
+13:09:12.236 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- You can press CTRL+C to shutdown this server.
+13:09:12.236 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- 
+13:09:12.236 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- version: 2.25.6
+13:09:12.236 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- listening to address: localhost:8729
+13:09:12.236 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- data directory configured to: D:\projects\typerefinery-ai\typerefinery\services\typedb\server\data
+13:09:12.238 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- bootup completed in: 3172 ms
+13:09:12.238 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- 
+14:21:29.148 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- TypeDB Server is now running and will keep this process alive.
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- You can press CTRL+C to shutdown this server.
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- 
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- version: 2.25.6
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- listening to address: localhost:8729
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- data directory configured to: D:\projects\typerefinery-ai\typerefinery\services\typedb\server\data
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- bootup completed in: 5472 ms
+14:21:29.149 [main] INFO com.vaticle.typedb.core.server.TypeDBServer -- 
