@@ -67,11 +67,11 @@ The verifier builds release archives, validates the manifest and setup job contr
 
 ## Init And Sample Jobs
 
-The source service set includes:
+The packaged setup contract includes:
 
 - `typedb-init`: one-shot TypeQL schema/database creation through the TypeDB console
 - `typedb-sample`: one-shot Python sample-data upload after schema initialization
 
-Those are now implemented as manual `setup.steps` on the `typedb` service, not as managed daemons. The packaged scripts preserve the donor file contract (`init.tql.template`, `schema.tql`, `requirements.txt`, `basic_upload.py`, `basic_logs.py`, `data/`, and `schema/`) while moving execution into Service Lasso's setup lifecycle.
+These are implemented as manual `setup.steps` on the `typedb` service, not as managed daemons. The packaged scripts include the expected setup assets (`init.tql.template`, `schema.tql`, `requirements.txt`, `basic_upload.py`, `basic_logs.py`, `data/`, and `schema/`) and run through Service Lasso's setup lifecycle.
 
 See [docs/job-boundary.md](docs/job-boundary.md).
