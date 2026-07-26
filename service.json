@@ -6,17 +6,40 @@
   "version": "2.25.6-win32_2.22.0-posix",
   "enabled": true,
   "execservice": "@java",
-  "ports": {
-    "service": 8729
-  },
+  "endpoints": [
+    {
+      "id": "service",
+      "kind": "network",
+      "label": "TypeDB TCP",
+      "direction": "inbound",
+      "transport": "tcp",
+      "protocol": "tcp",
+      "bind": "127.0.0.1",
+      "port": {
+        "default": 8729,
+        "strategy": "preferred"
+      },
+      "exposure": "local",
+      "primary": true
+    },
+    {
+      "id": "typedb",
+      "kind": "url",
+      "label": "TypeDB",
+      "target": "service",
+      "url": "typedb://${endpoint.service.bind}:${endpoint.service.port}",
+      "exposure": "local",
+      "primary": true
+    }
+  ],
   "env": {
     "SERVICE_BIN_PATH": "${SERVICE_ARTIFACT_ROOT}/typedb",
     "SERVICE_DATA_PATH": "${SERVICE_ROOT}/server/data",
     "SERVICE_LOG_PATH": "${SERVICE_ROOT}/server/logs",
-    "TYPEDB_HOST": "127.0.0.1",
-    "TYPEDB_PORT": "${SERVICE_PORT}",
+    "TYPEDB_HOST": "${endpoint.service.bind}",
+    "TYPEDB_PORT": "${endpoint.service.port}",
     "TYPEDB_DB": "typerefinery",
-    "TYPEDB_URL": "typedb://${TYPEDB_HOST}:${TYPEDB_PORT}"
+    "TYPEDB_URL": "${endpoint.typedb.url}"
   },
   "globalenv": {
     "TYPEDB_HOST": "${TYPEDB_HOST}",
@@ -25,13 +48,6 @@
     "TYPEDB_URL": "${TYPEDB_URL}",
     "TYPEDB_DATA_PATH": "${SERVICE_DATA_PATH}"
   },
-  "urls": [
-    {
-      "label": "typedb",
-      "url": "${TYPEDB_URL}",
-      "kind": "local"
-    }
-  ],
   "artifact": {
     "kind": "archive",
     "source": {
@@ -55,9 +71,9 @@
     }
   },
   "commandline": {
-    "win32": "-Xms256m -Xmx1024m -cp \"${SERVICE_BIN_PATH}/server/lib/*\" -Dtypedb.dir=\"${SERVICE_BIN_PATH}\" com.vaticle.typedb.core.server.TypeDBServer --config=\"${SERVICE_BIN_PATH}/server/conf/config.yml\" --storage.data=\"${SERVICE_DATA_PATH}\" --server.address ${TYPEDB_HOST}:${SERVICE_PORT}",
-    "linux": "-Xms256m -Xmx1024m -cp \"${SERVICE_BIN_PATH}/server/lib/*\" -Dtypedb.dir=\"${SERVICE_BIN_PATH}\" com.vaticle.typedb.core.server.TypeDBServer --config=\"${SERVICE_BIN_PATH}/server/conf/config.yml\" --storage.data=\"${SERVICE_DATA_PATH}\" --server.address ${TYPEDB_HOST}:${SERVICE_PORT}",
-    "darwin": "-Xms256m -Xmx1024m -cp \"${SERVICE_BIN_PATH}/server/lib/*\" -Dtypedb.dir=\"${SERVICE_BIN_PATH}\" com.vaticle.typedb.core.server.TypeDBServer --config=\"${SERVICE_BIN_PATH}/server/conf/config.yml\" --storage.data=\"${SERVICE_DATA_PATH}\" --server.address ${TYPEDB_HOST}:${SERVICE_PORT}"
+    "win32": "-Xms256m -Xmx1024m -cp \"${SERVICE_BIN_PATH}/server/lib/*\" -Dtypedb.dir=\"${SERVICE_BIN_PATH}\" com.vaticle.typedb.core.server.TypeDBServer --config=\"${SERVICE_BIN_PATH}/server/conf/config.yml\" --storage.data=\"${SERVICE_DATA_PATH}\" --server.address ${TYPEDB_HOST}:${TYPEDB_PORT}",
+    "linux": "-Xms256m -Xmx1024m -cp \"${SERVICE_BIN_PATH}/server/lib/*\" -Dtypedb.dir=\"${SERVICE_BIN_PATH}\" com.vaticle.typedb.core.server.TypeDBServer --config=\"${SERVICE_BIN_PATH}/server/conf/config.yml\" --storage.data=\"${SERVICE_DATA_PATH}\" --server.address ${TYPEDB_HOST}:${TYPEDB_PORT}",
+    "darwin": "-Xms256m -Xmx1024m -cp \"${SERVICE_BIN_PATH}/server/lib/*\" -Dtypedb.dir=\"${SERVICE_BIN_PATH}\" com.vaticle.typedb.core.server.TypeDBServer --config=\"${SERVICE_BIN_PATH}/server/conf/config.yml\" --storage.data=\"${SERVICE_DATA_PATH}\" --server.address ${TYPEDB_HOST}:${TYPEDB_PORT}"
   },
   "install": {
     "files": [
@@ -133,7 +149,7 @@
   },
   "healthcheck": {
     "type": "tcp",
-    "address": "${TYPEDB_HOST}:${SERVICE_PORT}",
+    "address": "${endpoint.service.bind}:${endpoint.service.port}",
     "retries": 80,
     "interval": 250
   },

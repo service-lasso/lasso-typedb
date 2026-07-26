@@ -207,10 +207,31 @@ async function smokeCurrentPlatform(artifact) {
 const manifest = JSON.parse(await readFile(path.join(repoRoot, "service.json"), "utf8"));
 assert(manifest.id === "typedb", `Unexpected service id: ${manifest.id}`);
 assert(manifest.execservice === "@java", "TypeDB must execute through @java.");
-assert(manifest.ports?.service === 8729, "Service port must default to 8729.");
+assert(manifest.ports === undefined, "New TypeDB manifest authoring must not use legacy ports.");
+assert(manifest.urls === undefined, "New TypeDB manifest authoring must not use legacy urls.");
+const endpointsById = new Map((manifest.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
+const serviceEndpoint = endpointsById.get("service");
+const typedbEndpoint = endpointsById.get("typedb");
+assert(serviceEndpoint?.kind === "network", "Missing TypeDB network service endpoint.");
+assert(serviceEndpoint?.label === "TypeDB TCP", "Unexpected TypeDB service endpoint label.");
+assert(serviceEndpoint?.direction === "inbound", "TypeDB service endpoint must be inbound.");
+assert(serviceEndpoint?.transport === "tcp", "TypeDB service endpoint must use TCP transport.");
+assert(serviceEndpoint?.protocol === "tcp", "TypeDB service endpoint must use TCP protocol.");
+assert(serviceEndpoint?.bind === "127.0.0.1", "TypeDB service endpoint must bind to loopback.");
+assert(serviceEndpoint?.port?.default === 8729, "TypeDB service endpoint port must default to 8729.");
+assert(serviceEndpoint?.port?.strategy === "preferred", "TypeDB service endpoint must use the preferred port strategy.");
+assert(serviceEndpoint?.exposure === "local", "TypeDB service endpoint exposure must be local.");
+assert(serviceEndpoint?.primary === true, "TypeDB service endpoint must be primary.");
+assert(typedbEndpoint?.kind === "url", "Missing TypeDB URL endpoint.");
+assert(typedbEndpoint?.target === "service", "TypeDB URL endpoint must target the service endpoint.");
+assert(typedbEndpoint?.url === "typedb://${endpoint.service.bind}:${endpoint.service.port}", "TypeDB URL endpoint must use endpoint selectors.");
+assert(typedbEndpoint?.exposure === "local", "TypeDB URL endpoint exposure must be local.");
 assert(manifest.healthcheck?.type === "tcp", "Healthcheck must be TCP.");
-assert(manifest.healthcheck?.address === "${TYPEDB_HOST}:${SERVICE_PORT}", "TCP healthcheck must use the TypeDB host and service port.");
+assert(manifest.healthcheck?.address === "${endpoint.service.bind}:${endpoint.service.port}", "TCP healthcheck must use endpoint selectors.");
 assert(manifest.depend_on?.includes("@java"), "Missing @java dependency.");
+assert(manifest.env?.TYPEDB_HOST === "${endpoint.service.bind}", "TYPEDB_HOST must be an endpoint alias.");
+assert(manifest.env?.TYPEDB_PORT === "${endpoint.service.port}", "TYPEDB_PORT must be an endpoint alias.");
+assert(manifest.env?.TYPEDB_URL === "${endpoint.typedb.url}", "TYPEDB_URL must be an endpoint URL alias.");
 for (const globalName of ["TYPEDB_HOST", "TYPEDB_PORT", "TYPEDB_DB", "TYPEDB_URL", "TYPEDB_DATA_PATH"]) {
   assert(manifest.globalenv?.[globalName], `Missing globalenv output: ${globalName}`);
 }
@@ -244,6 +265,7 @@ for (const jobPath of [
 for (const platform of platforms) {
   const target = targets[platform];
   assert(manifest.commandline?.[platform]?.includes("com.vaticle.typedb.core.server.TypeDBServer"), `Missing server commandline for ${platform}.`);
+  assert(manifest.commandline?.[platform]?.includes("${TYPEDB_HOST}:${TYPEDB_PORT}"), `Server commandline for ${platform} must use endpoint-derived TypeDB aliases.`);
   assert(manifest.artifact?.platforms?.[platform]?.assetName === assetName(platform), `Unexpected artifact name for ${platform}.`);
   const vendorRoot = path.join(repoRoot, target.vendorPath);
   assert(existsSync(path.join(vendorRoot, "LICENSE")), `Missing TypeDB license for ${platform}.`);
