@@ -147,12 +147,15 @@
       }
     }
   },
-  "healthcheck": {
-    "type": "tcp",
-    "address": "${endpoint.service.bind}:${endpoint.service.port}",
-    "retries": 80,
-    "interval": 250
-  },
+  "healthchecks": [
+    {
+      "id": "typedb-tcp-ready",
+      "type": "tcp",
+      "address": "${endpoint.service.bind}:${endpoint.service.port}",
+      "retries": 80,
+      "interval": 250
+    }
+  ],
   "depend_on": [
     "@java"
   ],
