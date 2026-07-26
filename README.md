@@ -10,7 +10,7 @@ This repo packages the TypeDB daemon runtime into Service Lasso archives. Schema
 - Primary endpoint: `service` (`tcp`, loopback, preferred port `8729`)
 - URL endpoint: `typedb://${endpoint.service.bind}:${endpoint.service.port}`
 - Runtime provider: `@java`
-- Healthcheck: TCP on `${endpoint.service.bind}:${endpoint.service.port}`
+- Healthchecks: `typedb-tcp-ready` TCP check on `${endpoint.service.bind}:${endpoint.service.port}`
 - Data path: `server/data`
 - Log path: `server/logs`
 - Default database name exported as `typerefinery`
