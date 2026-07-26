@@ -7,14 +7,15 @@ This repo packages the TypeDB daemon runtime into Service Lasso archives. Schema
 ## Runtime Contract
 
 - Service id: `typedb`
-- Main port: `8729`
+- Primary endpoint: `service` (`tcp`, loopback, preferred port `8729`)
+- URL endpoint: `typedb://${endpoint.service.bind}:${endpoint.service.port}`
 - Runtime provider: `@java`
-- Healthcheck: TCP on the service port
+- Healthcheck: TCP on `${endpoint.service.bind}:${endpoint.service.port}`
 - Data path: `server/data`
 - Log path: `server/logs`
 - Default database name exported as `typerefinery`
 
-The service exports:
+The manifest authors service interfaces through canonical `endpoints[]` entries. The service keeps the existing exported aliases outside endpoint entries for compatibility:
 
 - `TYPEDB_HOST`
 - `TYPEDB_PORT`
@@ -63,7 +64,7 @@ npm install
 npm test
 ```
 
-The verifier builds release archives, validates the manifest and setup job contract, confirms packaged init/sample job assets are present, confirms no runtime database state is packaged, and starts the current platform daemon long enough to prove TCP readiness.
+The verifier builds release archives, validates the canonical endpoint manifest and setup job contract, confirms packaged init/sample job assets are present, confirms no runtime database state is packaged, and starts the current platform daemon long enough to prove TCP readiness.
 
 ## Init And Sample Jobs
 
