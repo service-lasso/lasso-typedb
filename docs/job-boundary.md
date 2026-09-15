@@ -30,6 +30,3 @@ All steps use `rerun: manual` so a baseline startup does not mutate database/sch
 The canonical consumer instructions, including deliberate `init-schema` and
 `load-sample` runs, intentional `--force` reruns, and setup-history handling,
 are in [One-shot Jobs](https://service-lasso.github.io/service-lasso/reference/one-shot-jobs).
-This redirect depends on Core PR
-[service-lasso#1288](https://github.com/service-lasso/service-lasso/pull/1288)
-and must not merge before that guide is available.

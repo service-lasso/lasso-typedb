@@ -33,9 +33,7 @@ The manifest includes three manual setup steps:
 
 For the canonical consumer workflow, including deliberate schema/sample runs
 and `--force` reruns, see [One-shot Jobs](https://service-lasso.github.io/service-lasso/reference/one-shot-jobs).
-That Core guide is supplied by dependent PR
-[service-lasso#1288](https://github.com/service-lasso/service-lasso/pull/1288);
-do not merge this redirect before it is available.
+
 
 All three steps use `rerun: manual`.
 
