@@ -31,10 +31,6 @@ The manifest includes three manual setup steps:
 - `install-sample-python-deps`: runs through `@python` and installs the packaged sample loader requirements into `jobs/sample/__packages__`.
 - `load-sample`: starts after `typedb:init-schema` and `typedb:install-sample-python-deps`, then runs `jobs/sample/basic_upload.py` through `@python`.
 
-For the canonical consumer workflow, including deliberate schema/sample runs
-and `--force` reruns, see [One-shot Jobs](https://service-lasso.github.io/service-lasso/reference/one-shot-jobs).
-
-
 All three steps use `rerun: manual`.
 
 The default init job writes `jobs/init/init.tql` and `jobs/init/schema.tql` into the service root during config so `${TYPEDB_DB}` is resolved from the consuming app's manifest/env. Apps can replace those generated files or fork this service manifest if they own a different schema.
@@ -66,5 +62,3 @@ The packaged setup contract includes:
 - `typedb-sample`: one-shot Python sample-data upload after schema initialization
 
 These are implemented as manual `setup.steps` on the `typedb` service, not as managed daemons. The packaged scripts include the expected setup assets (`init.tql.template`, `schema.tql`, `requirements.txt`, `basic_upload.py`, `basic_logs.py`, `data/`, and `schema/`) and run through Service Lasso's setup lifecycle.
-
-See [docs/job-boundary.md](docs/job-boundary.md).
